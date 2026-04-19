@@ -1,4 +1,4 @@
-            <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
@@ -27,18 +27,15 @@
             top: 20px;
             right: 20px;
             z-index: 50;
-            width: clamp(60px, 10vw, 90px); /* Трохи збільшив, щоб лого було помітним */
+            width: clamp(60px, 10vw, 90px);
             height: auto;
-            
-            /* Ефект скляної підкладки */
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 24px;
-            
             padding: 8px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-            
             pointer-events: none; 
             animation: logoFadeIn 1.5s ease-out;
         }
@@ -48,7 +45,7 @@
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        /* --- ВІДЕО ТА ЕКРАНИ --- */
+        /* --- ВІДЕО-ПЛЕЄР --- */
         #video-container {
             display: none;
             width: 100vw;
@@ -57,6 +54,7 @@
             top: 0;
             left: 0;
             z-index: 10;
+            background: #000;
         }
 
         iframe {
@@ -66,6 +64,7 @@
             pointer-events: none;
         }
 
+        /* --- ЕКРАН ОЧІКУВАННЯ --- */
         #no-stream {
             display: flex;
             align-items: center;
@@ -73,59 +72,83 @@
             width: 100vw;
             height: 100vh;
             text-align: center;
-            background: radial-gradient(circle at center, #111 0%, #000 100%);
+            /* Анімований градієнтний фон у стилі логотипу */
+            background: linear-gradient(-45deg, #001220, #003049, #004d40, #050505);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
             z-index: 5;
+            position: relative;
+            overflow: hidden;
+            perspective: 1000px; /* Для 3D ефекту */
         }
 
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Інтерактивне світіння за курсором */
+        .cursor-glow {
+            position: absolute;
+            width: 40vw;
+            height: 40vw;
+            background: radial-gradient(circle, rgba(0, 255, 170, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            transition: width 0.3s, height 0.3s;
+        }
+
+        /* 3D Картка з текстом */
         .message-box {
-            padding: 45px;
-            border-radius: 45px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(25px);
-            box-shadow: 0 25px 60px rgba(0,0,0,0.9);
+            position: relative;
+            z-index: 2;
+            padding: 50px;
+            border-radius: 30px;
+            background: rgba(25, 25, 30, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.2);
+            /* Плавне повернення картки на місце */
+            transition: transform 0.2s ease-out; 
+            transform-style: preserve-3d;
         }
 
         h1 {
-            font-size: clamp(1.8rem, 6vw, 2.8rem);
-            margin-bottom: 12px;
+            font-size: clamp(2rem, 6vw, 3.5rem);
+            margin-bottom: 15px;
             font-weight: 800;
-            background: linear-gradient(135deg, #ffffff 0%, #666666 100%);
+            background: linear-gradient(135deg, #ffffff 0%, #a8ff78 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            transform: translateZ(30px); /* Ефект висування тексту вперед */
         }
 
         p {
-            font-size: 1rem;
-            color: #444;
-            letter-spacing: 2px;
+            font-size: 1.2rem;
+            color: #aaa;
+            letter-spacing: 3px;
             text-transform: uppercase;
             font-weight: 600;
+            transform: translateZ(20px);
         }
 
-        .loader-bar {
-            width: 50px;
-            height: 3px;
-            background: #1a1a1a;
-            margin: 35px auto 0;
-            border-radius: 10px;
-            position: relative;
-            overflow: hidden;
+        .pulse-ring {
+            width: 60px;
+            height: 60px;
+            border: 3px solid rgba(0, 255, 170, 0.5);
+            border-radius: 50%;
+            margin: 40px auto 0;
+            animation: ringPulse 2s infinite ease-out;
+            transform: translateZ(10px);
         }
 
-        .loader-bar::after {
-            content: '';
-            position: absolute;
-            width: 25px;
-            height: 100%;
-            background: #ffffff;
-            opacity: 0.3;
-            animation: slide 2s infinite ease-in-out;
-        }
-
-        @keyframes slide {
-            0% { left: -25px; }
-            100% { left: 50px; }
+        @keyframes ringPulse {
+            0% { transform: translateZ(10px) scale(0.8); opacity: 1; }
+            100% { transform: translateZ(10px) scale(1.8); opacity: 0; }
         }
     </style>
 </head>
@@ -134,10 +157,11 @@
     <img class="channel-logo" src="retouch_2026041912073655.png" alt="ROM TV">
 
     <div id="no-stream">
-        <div class="message-box">
-            <h1>Поки що ефіру немає</h1>
-            <p>Очікуйте на включення</p>
-            <div class="loader-bar"></div>
+        <div class="cursor-glow" id="glow"></div>
+        <div class="message-box" id="tilt-box">
+            <h1>ROM TV</h1>
+            <p>Ефір скоро почнеться</p>
+            <div class="pulse-ring"></div>
         </div>
     </div>
 
@@ -150,6 +174,34 @@
         const CHANNEL_ID = 'UCnOzsQewWOgyi3ioTF_TjNA';
         let isLive = false;
 
+        // --- ІНТЕРАКТИВ (Світіння та 3D-нахил) ---
+        const noStreamScreen = document.getElementById('no-stream');
+        const tiltBox = document.getElementById('tilt-box');
+        const glow = document.getElementById('glow');
+
+        noStreamScreen.addEventListener('mousemove', (e) => {
+            // Рух світіння за курсором
+            glow.style.left = e.clientX + 'px';
+            glow.style.top = e.clientY + 'px';
+
+            // 3D нахил картки
+            const rect = tiltBox.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
+            
+            // Коефіцієнт нахилу (менше = слабший нахил)
+            const tiltX = (y / rect.height) * -20; 
+            const tiltY = (x / rect.width) * 20;
+
+            tiltBox.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale3d(1.02, 1.02, 1.02)`;
+        });
+
+        // Повернення картки в центр, коли миша йде
+        noStreamScreen.addEventListener('mouseleave', () => {
+            tiltBox.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+        });
+
+        // --- ЛОГІКА YOUTUBE СТРІМУ ---
         async function checkStream() {
             try {
                 const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${CHANNEL_ID}&type=video&eventType=live&key=${API_KEY}`;
@@ -157,7 +209,6 @@
                 const data = await response.json();
 
                 const container = document.getElementById('video-container');
-                const noStream = document.getElementById('no-stream');
                 const iframe = document.getElementById('stream-iframe');
 
                 if (data.items && data.items.length > 0) {
@@ -166,14 +217,14 @@
                     
                     if (iframe.src !== newSrc) {
                         iframe.src = newSrc;
-                        noStream.style.display = 'none';
+                        noStreamScreen.style.display = 'none';
                         container.style.display = 'block';
                         isLive = true;
                     }
                 } else {
                     if (isLive) {
                         iframe.src = "";
-                        noStream.style.display = 'flex';
+                        noStreamScreen.style.display = 'flex';
                         container.style.display = 'none';
                         isLive = false;
                     }
