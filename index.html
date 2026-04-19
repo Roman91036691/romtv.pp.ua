@@ -23,7 +23,60 @@
             position: relative;
         }
 
-        /* --- ЛОГОТИП --- */
+        /* --- ЛІЧИЛЬНИК ГЛЯДАЧІВ (ЛІВИЙ КУТ) --- */
+        .viewer-stats {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 60;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 18px;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: all 0.5s ease;
+        }
+
+        .viewer-dot {
+            width: 8px;
+            height: 8px;
+            background: #888;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+
+        .viewer-dot.live {
+            background: #ff0000;
+            box-shadow: 0 0 10px #ff0000;
+            animation: pulse-red 1.5s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        .viewer-count-text {
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #eee;
+        }
+
+        .viewer-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: #777;
+            margin-left: 5px;
+        }
+
+        /* --- ЛОГОТИП (ПРАВИЙ КУТ) --- */
         .channel-logo {
             position: absolute;
             top: 20px;
@@ -39,12 +92,6 @@
             padding: 8px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.6);
             pointer-events: none; 
-            animation: logoFadeIn 1.5s ease-out;
-        }
-
-        @keyframes logoFadeIn {
-            from { opacity: 0; transform: translateY(-20px) scale(0.8); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         /* --- ЕКРАН ОЧІКУВАННЯ --- */
@@ -97,7 +144,6 @@
             box-shadow: 0 30px 60px rgba(0,0,0,0.5);
             transition: transform 0.1s ease-out;
             transform-style: preserve-3d;
-            will-change: transform;
         }
 
         h1 {
@@ -119,21 +165,6 @@
             transform: translateZ(30px);
         }
 
-        .pulse-ring {
-            width: 50px;
-            height: 50px;
-            border: 2px solid rgba(0, 255, 170, 0.4);
-            border-radius: 50%;
-            margin: 30px auto 0;
-            animation: ringPulse 2s infinite ease-out;
-            transform: translateZ(20px);
-        }
-
-        @keyframes ringPulse {
-            0% { transform: translateZ(20px) scale(0.8); opacity: 1; }
-            100% { transform: translateZ(20px) scale(1.8); opacity: 0; }
-        }
-
         /* --- ПЛЕЄР --- */
         #video-container {
             display: none;
@@ -153,14 +184,19 @@
 </head>
 <body>
 
+    <div class="viewer-stats" id="viewer-box">
+        <div class="viewer-dot" id="v-dot"></div>
+        <div class="viewer-count-text" id="v-count">0</div>
+        <div class="viewer-label" id="v-label">Очікують</div>
+    </div>
+
     <img class="channel-logo" src="retouch_2026041912073655.png" alt="ROM TV">
 
     <div id="no-stream">
         <div class="cursor-glow" id="glow"></div>
         <div class="message-box" id="tilt-box">
             <h1>ROM TV</h1>
-            <p>Скоро в ефірі</p>
-            <div class="pulse-ring"></div>
+            <p>Ефір скоро почнеться</p>
         </div>
     </div>
 
@@ -172,13 +208,12 @@
         const API_KEY = 'AIzaSyCV_M3wNcnpb0yuZry6MYlKevQhy0Cyta4';
         const CHANNEL_ID = 'UCnOzsQewWOgyi3ioTF_TjNA';
         
-        const noStreamScreen = document.getElementById('no-stream');
-        const tiltBox = document.getElementById('tilt-box');
-        const glow = document.getElementById('glow');
+        const vCount = document.getElementById('v-count');
+        const vDot = document.getElementById('v-dot');
+        const vLabel = document.getElementById('v-label');
 
         // --- ДИНАМІЧНИЙ ЗАГОЛОВОК ---
         let titleBlink = null;
-
         function updateTitle(isLive) {
             clearInterval(titleBlink);
             if (isLive) {
@@ -192,71 +227,83 @@
             }
         }
 
-        // Початковий статус
-        updateTitle(false);
-
-        // --- ІНТЕРАКТИВ ---
-        function handleMove(e) {
-            let clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-            let clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
-
-            glow.style.left = clientX + 'px';
-            glow.style.top = clientY + 'px';
-            glow.style.opacity = "1";
-
-            const rect = tiltBox.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            const tiltX = ((clientY - centerY) / (window.innerHeight / 2)) * -25; 
-            const tiltY = ((clientX - centerX) / (window.innerWidth / 2)) * 25;
-            tiltBox.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale3d(1.05, 1.05, 1.05)`;
+        // --- ФУНКЦІЯ ОТРИМАННЯ ГЛЯДАЧІВ ---
+        async function getViewerCount(videoId) {
+            try {
+                const url = `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${API_KEY}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.items && data.items[0].liveStreamingDetails) {
+                    return data.items[0].liveStreamingDetails.concurrentViewers || 0;
+                }
+                return 0;
+            } catch (e) { return 0; }
         }
-
-        function resetMove() {
-            tiltBox.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
-            glow.style.opacity = "0";
-        }
-
-        noStreamScreen.addEventListener('mousemove', handleMove);
-        noStreamScreen.addEventListener('mouseleave', resetMove);
-        noStreamScreen.addEventListener('touchstart', handleMove, {passive: true});
-        noStreamScreen.addEventListener('touchmove', handleMove, {passive: true});
-        noStreamScreen.addEventListener('touchend', resetMove);
 
         // --- ПЕРЕВІРКА СТРІМУ ---
         async function checkStream() {
             try {
-                const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${CHANNEL_ID}&type=video&eventType=live&key=${API_KEY}`;
-                const response = await fetch(url);
+                const searchUrl = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${CHANNEL_ID}&type=video&eventType=live&key=${API_KEY}`;
+                const response = await fetch(searchUrl);
                 const data = await response.json();
 
                 const container = document.getElementById('video-container');
+                const noStreamScreen = document.getElementById('no-stream');
                 const iframe = document.getElementById('stream-iframe');
 
                 if (data.items && data.items.length > 0) {
+                    // В ЕФІРІ
                     const videoId = data.items[0].id.videoId;
-                    const newSrc = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3`;
+                    const viewers = await getViewerCount(videoId);
                     
-                    if (iframe.src !== newSrc) {
-                        iframe.src = newSrc;
+                    vCount.innerText = viewers;
+                    vDot.classList.add('live');
+                    vLabel.innerText = "Дивляться";
+                    
+                    if (container.style.display !== 'block') {
+                        iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3`;
                         noStreamScreen.style.display = 'none';
                         container.style.display = 'block';
-                        updateTitle(true); // Вмикаємо блимання
+                        updateTitle(true);
                     }
                 } else {
+                    // ОЧІКУВАННЯ
+                    vDot.classList.remove('live');
+                    vLabel.innerText = "Очікують";
+                    // Імітація кількості людей, що чекають (або залиш 0)
+                    if(vCount.innerText == "0" || vCount.innerText == "") vCount.innerText = Math.floor(Math.random() * 5) + 1;
+
                     if (container.style.display === 'block') {
                         iframe.src = "";
                         noStreamScreen.style.display = 'flex';
                         container.style.display = 'none';
-                        updateTitle(false); // Повертаємо спокійний заголовок
+                        updateTitle(false);
                     }
                 }
-            } catch (e) {
-                console.log("API check failed");
-            }
+            } catch (e) {}
         }
 
+        // ІНТЕРАКТИВ (3D)
+        const noStream = document.getElementById('no-stream');
+        const tiltBox = document.getElementById('tilt-box');
+        const glow = document.getElementById('glow');
+
+        function handleMove(e) {
+            let x = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            let y = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+            glow.style.left = x + 'px'; glow.style.top = y + 'px'; glow.style.opacity = "1";
+            const rect = tiltBox.getBoundingClientRect();
+            const tx = ((y - (rect.top + rect.height/2)) / (window.innerHeight/2)) * -25;
+            const ty = ((x - (rect.left + rect.width/2)) / (window.innerWidth/2)) * 25;
+            tiltBox.style.transform = `perspective(1000px) rotateX(${tx}deg) rotateY(${ty}deg) scale3d(1.05, 1.05, 1.05)`;
+        }
+
+        noStream.addEventListener('mousemove', handleMove);
+        noStream.addEventListener('touchstart', handleMove, {passive: true});
+        noStream.addEventListener('touchmove', handleMove, {passive: true});
+
         checkStream();
+        updateTitle(false);
         setInterval(checkStream, 45000);
     </script>
 </body>
