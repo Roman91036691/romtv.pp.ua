@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROM TV - LIVE</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: #050505;
+            color: white;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow: hidden;
+        }
+
+        /* Контейнер для плеєра */
+        #video-container {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            pointer-events: none; /* Блокуємо паузу та меню */
+        }
+
+        /* Екран "Ефіру немає" */
+        #no-stream {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100vw;
+            height: 100vh;
+            text-align: center;
+            background: radial-gradient(circle at center, #111 0%, #000 100%);
+        }
+
+        .message-box {
+            padding: 40px;
+            border-radius: 40px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        }
+
+        h1 {
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            margin-bottom: 15px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, #777 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            font-size: 1.1rem;
+            color: #555;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .loader {
+            width: 40px;
+            height: 4px;
+            background: #222;
+            margin: 30px auto 0;
+            border-radius: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loader::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 100%;
+            background: #444;
+            animation: loading 1.5s infinite ease-in-out;
+        }
+
+        @keyframes loading {
+            0% { left: -20px; }
+            100% { left: 40px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="no-stream">
+        <div class="message-box">
+            <h1>Поки що ефіру немає</h1>
+            <p>Чекаємо на початок</p>
+            <div class="loader"></div>
+        </div>
+    </div>
+
+    <div id="video-container">
+        <iframe id="stream-iframe" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    </div>
+
+    <script>
+        const API_KEY = 'AIzaSyCV_M3wNcnpb0yuZry6MYlKevQhy0Cyta4';
+        const CHANNEL_ID = 'UCnOzsQewWOgyi3ioTF_TjNA';
+        let isLive = false;
+
+        async function checkStream() {
+            try {
+                // Запит до YouTube API для пошуку живого стріму
+                const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${CHANNEL_ID}&type=video&eventType=live&key=${API_KEY}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                const container = document.getElementById('video-container');
+                const noStream = document.getElementById('no-stream');
+                const iframe = document.getElementById('stream-iframe');
+
+                if (data.items && data.items.length > 0) {
+                    const videoId = data.items[0].id.videoId;
+                    const newSrc = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3`;
+                    
+                    if (iframe.src !== newSrc) {
+                        iframe.src = newSrc;
+                        noStream.style.display = 'none';
+                        container.style.display = 'block';
+                        isLive = true;
+                    }
+                } else {
+                    // Якщо ефір закінчився або його немає
+                    if (isLive) {
+                        iframe.src = "";
+                        noStream.style.display = 'flex';
+                        container.style.display = 'none';
+                        isLive = false;
+                    }
+                }
+            } catch (error) {
+                console.error("Помилка API:", error);
+            }
+        }
+
+        // Перевірка при завантаженні
+        checkStream();
+        // Перевірка кожні 60 секунд
+        setInterval(checkStream, 60000);
+    </script>
+</body>
+</html>
