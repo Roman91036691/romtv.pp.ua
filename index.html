@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ROM TV - LIVE</title>
+    <title>ROM TV | Очікування</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            /* Забороняємо виділення тексту для кращого інтерактиву */
             user-select: none;
             -webkit-user-select: none;
         }
@@ -63,7 +62,6 @@
             position: relative;
             overflow: hidden;
             perspective: 1000px;
-            /* Важливо для мобільних: ігноруємо стандартні жести браузера */
             touch-action: none;
         }
 
@@ -82,7 +80,6 @@
             pointer-events: none;
             transform: translate(-50%, -50%);
             z-index: 1;
-            /* Плавність для світіння */
             transition: opacity 0.5s ease;
         }
 
@@ -179,34 +176,39 @@
         const tiltBox = document.getElementById('tilt-box');
         const glow = document.getElementById('glow');
 
-        // Функція для обробки руху (миша або палець)
-        function handleMove(e) {
-            let clientX, clientY;
+        // --- ДИНАМІЧНИЙ ЗАГОЛОВОК ---
+        let titleBlink = null;
 
-            if (e.type.includes('touch')) {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
+        function updateTitle(isLive) {
+            clearInterval(titleBlink);
+            if (isLive) {
+                let showDot = true;
+                titleBlink = setInterval(() => {
+                    document.title = showDot ? "🔴 LIVE | ROM TV" : "⚪ LIVE | ROM TV";
+                    showDot = !showDot;
+                }, 1000);
             } else {
-                clientX = e.clientX;
-                clientY = e.clientY;
+                document.title = "○ ROM TV | Відпочиваємо";
             }
+        }
 
-            // Рух світіння
+        // Початковий статус
+        updateTitle(false);
+
+        // --- ІНТЕРАКТИВ ---
+        function handleMove(e) {
+            let clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            let clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+
             glow.style.left = clientX + 'px';
             glow.style.top = clientY + 'px';
             glow.style.opacity = "1";
 
-            // 3D нахил
             const rect = tiltBox.getBoundingClientRect();
             const centerX = rect.left + rect.width / 2;
             const centerY = rect.top + rect.height / 2;
-            
-            const x = clientX - centerX;
-            const y = clientY - centerY;
-            
-            const tiltX = (y / (window.innerHeight / 2)) * -25; 
-            const tiltY = (x / (window.innerWidth / 2)) * 25;
-
+            const tiltX = ((clientY - centerY) / (window.innerHeight / 2)) * -25; 
+            const tiltY = ((clientX - centerX) / (window.innerWidth / 2)) * 25;
             tiltBox.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale3d(1.05, 1.05, 1.05)`;
         }
 
@@ -215,16 +217,13 @@
             glow.style.opacity = "0";
         }
 
-        // Події миші
         noStreamScreen.addEventListener('mousemove', handleMove);
         noStreamScreen.addEventListener('mouseleave', resetMove);
-
-        // Події тачу (для телефонів)
         noStreamScreen.addEventListener('touchstart', handleMove, {passive: true});
         noStreamScreen.addEventListener('touchmove', handleMove, {passive: true});
         noStreamScreen.addEventListener('touchend', resetMove);
 
-        // --- ЛОГІКА ПЕРЕВІРКИ СТРІМУ ---
+        // --- ПЕРЕВІРКА СТРІМУ ---
         async function checkStream() {
             try {
                 const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${CHANNEL_ID}&type=video&eventType=live&key=${API_KEY}`;
@@ -242,9 +241,19 @@
                         iframe.src = newSrc;
                         noStreamScreen.style.display = 'none';
                         container.style.display = 'block';
+                        updateTitle(true); // Вмикаємо блимання
+                    }
+                } else {
+                    if (container.style.display === 'block') {
+                        iframe.src = "";
+                        noStreamScreen.style.display = 'flex';
+                        container.style.display = 'none';
+                        updateTitle(false); // Повертаємо спокійний заголовок
                     }
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.log("API check failed");
+            }
         }
 
         checkStream();
