@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ROM TV | Очікування</title>
+    <title>ROMTV</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&display=swap" rel="stylesheet">
+
     <style>
         * {
             margin: 0;
@@ -16,122 +19,66 @@
         body, html {
             width: 100%;
             height: 100%;
-            background-color: #050505;
-            color: white;
-            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
             overflow: hidden;
-            position: relative;
+            background-color: #3A4636;
         }
 
-        /* --- ЛОГОТИП (ПРАВИЙ КУТ) --- */
-        .channel-logo {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 50;
-            width: clamp(50px, 12vw, 80px);
-            height: auto;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 20px;
-            padding: 8px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-            pointer-events: none; 
-            animation: logoFadeIn 1.5s ease-out;
-        }
-
-        @keyframes logoFadeIn {
-            from { opacity: 0; transform: translateY(-20px) scale(0.8); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        /* --- ЕКРАН ОЧІКУВАННЯ --- */
+        /* --- АНІМОВАНИЙ ФОН --- */
         #no-stream {
             display: flex;
+            flex-direction: column; /* Щоб лоадер був під текстом */
             align-items: center;
             justify-content: center;
             width: 100vw;
             height: 100vh;
-            text-align: center;
-            background: linear-gradient(-45deg, #001220, #003049, #004d40, #050505);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            z-index: 5;
+            background: linear-gradient(135deg, #3A4636, #465441, #3A4636);
+            background-size: 200% 200%;
+            animation: moveGradient 12s ease infinite;
             position: relative;
-            overflow: hidden;
-            perspective: 1000px;
-            touch-action: none;
+            padding: 20px;
         }
 
-        @keyframes gradientBG {
+        @keyframes moveGradient {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
 
-        .cursor-glow {
+        /* --- ЛОГОТИП --- */
+        .logo-box {
             position: absolute;
-            width: 60vw;
-            height: 60vw;
-            background: radial-gradient(circle, rgba(0, 255, 170, 0.12) 0%, rgba(0, 0, 0, 0) 70%);
-            border-radius: 50%;
-            pointer-events: none;
-            transform: translate(-50%, -50%);
-            z-index: 1;
-            transition: opacity 0.5s ease;
+            top: 30px;
+            right: 30px;
+            width: 60px; 
+            height: auto;
+            z-index: 100;
         }
 
-        .message-box {
-            position: relative;
-            z-index: 2;
-            padding: clamp(30px, 10vw, 50px);
-            width: 90%;
-            max-width: 450px;
-            border-radius: 35px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
-            transition: transform 0.1s ease-out;
-            transform-style: preserve-3d;
-            will-change: transform;
-        }
-
-        h1 {
-            font-size: clamp(2.2rem, 8vw, 3.5rem);
-            margin-bottom: 10px;
+        /* --- ТЕКСТ --- */
+        .status-text {
+            font-family: 'Montserrat', sans-serif;
+            font-size: clamp(2.5rem, 15vw, 7.5rem); 
             font-weight: 900;
-            background: linear-gradient(135deg, #ffffff 0%, #a8ff78 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            transform: translateZ(50px);
-        }
-
-        p {
-            font-size: 1rem;
-            color: #888;
-            letter-spacing: 4px;
+            color: #FFFFFF;
             text-transform: uppercase;
-            font-weight: 600;
-            transform: translateZ(30px);
+            letter-spacing: 2px;
+            text-align: center;
+            line-height: 1.1;
+            margin-bottom: 20px; /* Відступ до лоадера */
         }
 
-        .pulse-ring {
-            width: 50px;
-            height: 50px;
-            border: 2px solid rgba(0, 255, 170, 0.4);
-            border-radius: 50%;
-            margin: 30px auto 0;
-            animation: ringPulse 2s infinite ease-out;
-            transform: translateZ(20px);
+        /* --- ТВІЙ ЛОАДЕР (АДАПТОВАНИЙ) --- */
+        .loader {
+            width: 120px; /* Трохи збільшив для видимості */
+            height: 14px;
+            /* Білі смужки на прозорому фоні */
+            background: repeating-linear-gradient(-45deg, #ffffff 0 15px, #ffffff00 0 20px) left/200% 100%;
+            animation: l3 2s infinite linear;
+            opacity: 0.8;
         }
 
-        @keyframes ringPulse {
-            0% { transform: translateZ(20px) scale(0.8); opacity: 1; }
-            100% { transform: translateZ(20px) scale(1.8); opacity: 0; }
+        @keyframes l3 {
+            100% { background-position: right; }
         }
 
         /* --- ПЛЕЄР --- */
@@ -141,27 +88,36 @@
             height: 100vh;
             position: absolute;
             top: 0; left: 0;
-            z-index: 10;
+            z-index: 200;
             background: #000;
         }
 
-        iframe {
-            width: 100%; height: 100%; border: none;
-            pointer-events: none;
-        }
+        iframe { width: 100%; height: 100%; border: none; }
     </style>
 </head>
 <body>
 
-    <img class="channel-logo" src="retouch_2026041912073655.png" alt="ROM TV">
-
     <div id="no-stream">
-        <div class="cursor-glow" id="glow"></div>
-        <div class="message-box" id="tilt-box">
-            <h1>ROM TV</h1>
-            <p>Скоро в ефірі</p>
-            <div class="pulse-ring"></div>
+        <div class="logo-box">
+            <svg viewBox="0 0 600 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="600" height="600" rx="160" fill="url(#paint0_radial_750_298)"/>
+                <path d="M318.348 169.362C366.373 169.362 399.798 177.929 418.622 195.064C437.446 211.957 446.858 235.849 446.858 266.74C446.858 287.977 443.117 306.077 435.636 321.04C428.155 335.761 415.002 347.345 396.178 355.792C377.354 363.997 351.411 368.1 318.348 368.1H243.052V431.812H154C155.931 384.993 156.896 341.191 156.896 300.406C156.896 259.621 155.931 215.819 154 169L242.983 169.362H243.052H318.348ZM293.008 298.234C313.039 298.234 328.001 297.51 337.896 296.062C348.032 294.373 355.031 291.477 358.892 287.374C362.995 283.271 365.046 277.238 365.046 269.274C365.046 261.31 363.115 255.397 359.254 251.536C355.634 247.433 348.756 244.658 338.62 243.21C328.725 241.762 313.521 241.038 293.008 241.038H243.052V298.234H293.008Z" fill="url(#paint1_linear_750_298)"/>
+                <defs>
+                    <radialGradient id="paint0_radial_750_298" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(131 162) rotate(68.9012) scale(469.473)">
+                        <stop offset="0.109159" stop-color="#049C77"/>
+                        <stop offset="1" stop-color="#063CA2"/>
+                    </radialGradient>
+                    <linearGradient id="paint1_linear_750_298" x1="481" y1="390.5" x2="166" y2="115.5" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="white"/>
+                        <stop offset="1" stop-color="#FBFFFB"/>
+                    </linearGradient>
+                </defs>
+            </svg>
         </div>
+
+        <h1 class="status-text">ЕФІРУ НЕМА</h1>
+        
+        <div class="loader"></div>
     </div>
 
     <div id="video-container">
@@ -171,58 +127,7 @@
     <script>
         const API_KEY = 'AIzaSyCV_M3wNcnpb0yuZry6MYlKevQhy0Cyta4';
         const CHANNEL_ID = 'UCnOzsQewWOgyi3ioTF_TjNA';
-        
-        const noStreamScreen = document.getElementById('no-stream');
-        const tiltBox = document.getElementById('tilt-box');
-        const glow = document.getElementById('glow');
 
-        // --- ДИНАМІЧНИЙ ЗАГОЛОВОК ---
-        let titleBlink = null;
-        function updateTitle(isLive) {
-            clearInterval(titleBlink);
-            if (isLive) {
-                let showDot = true;
-                titleBlink = setInterval(() => {
-                    document.title = showDot ? "🔴 LIVE | ROM TV" : "⚪ LIVE | ROM TV";
-                    showDot = !showDot;
-                }, 1000);
-            } else {
-                document.title = "○ ROM TV | Відпочиваємо";
-            }
-        }
-
-        // Початковий заголовок
-        updateTitle(false);
-
-        // --- ІНТЕРАКТИВ (Миша + Тач) ---
-        function handleMove(e) {
-            let clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-            let clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
-
-            glow.style.left = clientX + 'px';
-            glow.style.top = clientY + 'px';
-            glow.style.opacity = "1";
-
-            const rect = tiltBox.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            const tiltX = ((clientY - centerY) / (window.innerHeight / 2)) * -25; 
-            const tiltY = ((clientX - centerX) / (window.innerWidth / 2)) * 25;
-            tiltBox.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale3d(1.05, 1.05, 1.05)`;
-        }
-
-        function resetMove() {
-            tiltBox.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
-            glow.style.opacity = "0";
-        }
-
-        noStreamScreen.addEventListener('mousemove', handleMove);
-        noStreamScreen.addEventListener('mouseleave', resetMove);
-        noStreamScreen.addEventListener('touchstart', handleMove, {passive: true});
-        noStreamScreen.addEventListener('touchmove', handleMove, {passive: true});
-        noStreamScreen.addEventListener('touchend', resetMove);
-
-        // --- ПЕРЕВІРКА СТРІМУ ---
         async function checkStream() {
             try {
                 const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${CHANNEL_ID}&type=video&eventType=live&key=${API_KEY}`;
@@ -230,31 +135,28 @@
                 const data = await response.json();
 
                 const container = document.getElementById('video-container');
+                const noStream = document.getElementById('no-stream');
                 const iframe = document.getElementById('stream-iframe');
 
                 if (data.items && data.items.length > 0) {
                     const videoId = data.items[0].id.videoId;
-                    const newSrc = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3`;
+                    const liveSrc = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1`;
                     
-                    if (iframe.src !== newSrc) {
-                        iframe.src = newSrc;
-                        noStreamScreen.style.display = 'none';
+                    if (iframe.src !== liveSrc) {
+                        iframe.src = liveSrc;
+                        noStream.style.display = 'none';
                         container.style.display = 'block';
-                        updateTitle(true);
                     }
                 } else {
-                    if (container.style.display === 'block') {
-                        iframe.src = "";
-                        noStreamScreen.style.display = 'flex';
-                        container.style.display = 'none';
-                        updateTitle(false);
-                    }
+                    iframe.src = "";
+                    noStream.style.display = 'flex';
+                    container.style.display = 'none';
                 }
-            } catch (e) {}
+            } catch (e) { console.error("Помилка:", e); }
         }
 
-        checkStream();
         setInterval(checkStream, 45000);
+        checkStream();
     </script>
 </body>
 </html>
